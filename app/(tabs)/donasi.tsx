@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, Alert, Image } from 'react-native';
 import React, { useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -154,7 +154,39 @@ export default function DonasiScreen() {
             onPress={() => handleDonation(item)}
           >
             <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-              <IconSymbol name={item.icon as any} size={32} color={item.color} />
+              {item.id === '1' ? (
+                <Image 
+                  source={require('@/assets/images/air.jpg')} 
+                  style={styles.donationImage}
+                  resizeMode="cover"
+                />
+              ) : item.id === '2' ? (
+                <Image 
+                  source={require('@/assets/images/mangroves.jpg')} 
+                  style={styles.donationImage}
+                  resizeMode="cover"
+                />
+              ) : item.id === '3' ? (
+                <Image 
+                  source={require('@/assets/images/sembako.jpg')} 
+                  style={styles.donationImage}
+                  resizeMode="cover"
+                />
+              ) : item.id === '4' ? (
+                <Image 
+                  source={require('@/assets/images/tas.jpg')} 
+                  style={styles.donationImage}
+                  resizeMode="cover"
+                />
+              ) : item.id === '5' ? (
+                <Image 
+                  source={require('@/assets/images/kotakp3k.jpg')} 
+                  style={styles.donationImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <IconSymbol name={item.icon as any} size={32} color={item.color} />
+              )}
             </View>
             
             <View style={styles.cardContent}>
@@ -331,6 +363,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-start',
+    overflow: 'hidden',
+  },
+  donationImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
   },
   cardContent: {
     flex: 1,
