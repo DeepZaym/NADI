@@ -7,7 +7,7 @@
 - **Aset Kebaikan:** Sistem konversi keringat (langkah, kalori, durasi) menjadi poin digital.
 - **Verifikasi Nurani:** Sistem audit kejujuran untuk memastikan integritas data aktivitas.
 - **Lapak Berkah:** Penyaluran poin kebaikan untuk misi nyata (Air Bersih, Mangrove, Medis).
-- **Cermin Diri & Dialog Nurani:** Ruang refleksi diri dan asisten motivasi spiritual.
+- **Cermin Diri & Suara Amigdala:** Ruang refleksi diri dan asisten motivasi spiritual.
 
 ## 🚀 Pake :
 - **Framework:** React Native (Expo)
