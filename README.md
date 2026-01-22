@@ -1,4 +1,4 @@
-# NADI - Menghargai Langkah, Menabur Kebaikan 🩺✨
+# NADI - Satu Denyut, Berjuta Harapan.✨
 
 **NADI** adalah aplikasi kesehatan berbasis integritas yang mengonversi aktivitas fisik menjadi aset sosial. Proyek ini dikembangkan untuk mengintegrasikan kesehatan jasmani, kejujuran (nurani), dan kepedulian sosial dalam satu ekosistem digital.
 
@@ -9,7 +9,7 @@
 - **Lapak Berkah:** Penyaluran poin kebaikan untuk misi nyata (Air Bersih, Mangrove, Medis).
 - **Cermin Diri & Dialog Nurani:** Ruang refleksi diri dan asisten motivasi spiritual.
 
-## 🚀 Teknologi
+## 🚀 Pake :
 - **Framework:** React Native (Expo)
 - **Bahasa:** TypeScript
 - **Styling:** React Native StyleSheet
