@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const { width } = Dimensions.get('window');
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export default function InputScreen() {
   const [langkah, setLangkah] = useState('');
@@ -11,6 +12,7 @@ export default function InputScreen() {
   const [durasi, setDurasi] = useState('');
   const [showFormula, setShowFormula] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const calculateAssetValue = (steps: number, calories: number, duration: number) => {
     // Formula konversi: 1000 langkah = 100 poin aset kebaikan
@@ -20,7 +22,7 @@ export default function InputScreen() {
     return stepPoints + caloriePoints + durationPoints;
   };
 
-  const handleSimpan = () => {
+  const handleSimpan = async () => {
     const nilaiLangkah = parseInt(langkah) || 0;
     const nilaiKalori = parseInt(kalori) || 0;
     const nilaiDurasi = parseInt(durasi) || 0;
@@ -29,31 +31,79 @@ export default function InputScreen() {
       Alert.alert("Oops!", "Masukkan minimal satu aktivitas fisik untuk dikonversi menjadi Aset Kebaikan! 💪");
       return;
     }
-    
-    // Verifikasi Nurani - deteksi nilai yang tidak wajar
-    if (nilaiLangkah > 50000) {
-      Alert.alert("Verifikasi Nurani 🤔", "Langkah terlalu tinggi! Mari berlatih jujur untuk investasi kebaikan yang bermakna.");
-      return;
+
+    setIsLoading(true);
+
+    try {
+      // Validation (Verifikasi Nurani)
+      if (nilaiLangkah > 50000) {
+        Alert.alert("Verifikasi Nurani 🤔", "Langkah terlalu tinggi! Mari berlatih jujur untuk investasi kebaikan yang bermakna.");
+        setIsLoading(false);
+        return;
+      }
+      if (nilaiKalori > 5000) {
+        Alert.alert("Verifikasi Nurani 🤔", "Kalori terlalu tinggi! Pastikan input sesuai dengan aktivitas yang benar-benar dilakukan.");
+        setIsLoading(false);
+        return;
+      }
+      if (nilaiDurasi > 600) {
+        Alert.alert("Verifikasi Nurani 🤔", "Durasi terlalu lama! Mari input yang realistis untuk investasi kebaikan.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Calculate points
+      const stepPoints = Math.floor(nilaiLangkah / 10);
+      const caloriePoints = nilaiKalori * 2;
+      const durationPoints = nilaiDurasi * 5;
+      const totalPoints = stepPoints + caloriePoints + durationPoints;
+
+      // Import AsyncStorage dynamically
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // Get current points
+      const currentPointsStr = await AsyncStorage.getItem('user_points');
+      const currentPoints = currentPointsStr ? parseInt(currentPointsStr) : 0;
+      
+      // Add new points
+      const newTotalPoints = currentPoints + totalPoints;
+      await AsyncStorage.setItem('user_points', newTotalPoints.toString());
+      
+      // Save activity record
+      const activity = {
+        id: Date.now().toString(),
+        steps: nilaiLangkah,
+        calories: nilaiKalori,
+        duration: nilaiDurasi,
+        points: totalPoints,
+        date: new Date().toISOString()
+      };
+      
+      const activitiesStr = await AsyncStorage.getItem('activities');
+      const activities = activitiesStr ? JSON.parse(activitiesStr) : [];
+      activities.push(activity);
+      await AsyncStorage.setItem('activities', JSON.stringify(activities));
+
+      // Show success message
+      Alert.alert(
+        "🎉 Luar Biasa!", 
+        "Luar biasa! Upayamu hari ini telah berhasil dikonversi menjadi poin. Jangan lihat besar kecilnya angka, tapi lihatlah besarnya niatmu untuk sehat dan manfaat untuk sesama"
+      );
+      
+      // Clear form
+      setLangkah('');
+      setKalori('');
+      setDurasi('');
+      
+    } catch (error: any) {
+      console.error('Error saving activity:', error);
+      Alert.alert(
+        "Error", 
+        "Terjadi kesalahan saat menyimpan aktivitas. Coba lagi."
+      );
+    } finally {
+      setIsLoading(false);
     }
-    if (nilaiKalori > 5000) {
-      Alert.alert("Verifikasi Nurani 🤔", "Kalori terlalu tinggi! Pastikan input sesuai dengan aktivitas yang benar-benar dilakukan.");
-      return;
-    }
-    if (nilaiDurasi > 600) {
-      Alert.alert("Verifikasi Nurani 🤔", "Durasi terlalu lama! Mari input yang realistis untuk investasi kebaikan.");
-      return;
-    }
-    
-    const totalAset = calculateAssetValue(nilaiLangkah, nilaiKalori, nilaiDurasi);
-    Alert.alert(
-      "🎉 Investasi Berhasil!", 
-      `Keringatmu telah dikonversi menjadi:\n\n💎 ${totalAset.toLocaleString('id-ID')} Aset Kebaikan\n\nSetiap tetes keringat adalah investasi untuk aksi sosial yang bermakna!`
-    );
-    
-    // Reset form
-    setLangkah('');
-    setKalori('');
-    setDurasi('');
   };
 
   return (
@@ -166,10 +216,14 @@ export default function InputScreen() {
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSimpan}>
+        <TouchableOpacity 
+          style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+          onPress={handleSimpan}
+          disabled={isLoading}
+        >
           <IconSymbol name="arrow.up.circle.fill" size={24} color="#FFFFFF" />
           <ThemedText style={styles.submitButtonText}>
-            Konversi ke Aset Kebaikan
+            {isLoading ? 'Menyimpan...' : 'Konversi ke Aset Kebaikan'}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -390,6 +444,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0.1,
   },
 
   // Conversion Card

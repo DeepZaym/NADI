@@ -1,9 +1,11 @@
 import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, Alert, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
+const API_BASE_URL = 'http://localhost:3000/api';
 
 interface Achievement {
   id: string;
@@ -27,10 +29,28 @@ export default function ProfilScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
   const [showChatbot, setShowChatbot] = useState(false);
+  const [totalLifetimePoints, setTotalLifetimePoints] = useState(0);
   
-  const totalLifetimePoints = 8750;
   const userName = "DeepZaym";
   const userStatus = "Penjaga Amanah";
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserPoints();
+    }, [])
+  );
+
+  const fetchUserPoints = async () => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const pointsStr = await AsyncStorage.getItem('user_points');
+      const points = pointsStr ? parseInt(pointsStr) : 0;
+      setTotalLifetimePoints(points);
+    } catch (error) {
+      console.error('Error fetching user points:', error);
+      setTotalLifetimePoints(0);
+    }
+  };
 
   const achievements: Achievement[] = [
     {

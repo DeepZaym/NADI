@@ -2,6 +2,11 @@ import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useHealthStats } from '@/hooks/useHealthStats';
 import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
+const API_BASE_URL = 'http://localhost:3000/api';
 
 interface MetricData {
   icon: string;
@@ -15,6 +20,28 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { stats, loading } = useHealthStats();
+  const [userPoints, setUserPoints] = useState(0);
+  const [pointsLoading, setPointsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserPoints();
+    }, [])
+  );
+
+  const fetchUserPoints = async () => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const pointsStr = await AsyncStorage.getItem('user_points');
+      const points = pointsStr ? parseInt(pointsStr) : 0;
+      setUserPoints(points);
+    } catch (error) {
+      console.error('Error fetching user points:', error);
+      setUserPoints(0);
+    } finally {
+      setPointsLoading(false);
+    }
+  };
 
   const healthMetrics: MetricData[] = [
     {
@@ -91,7 +118,7 @@ export default function HomeScreen() {
           </View>
           
           <ThemedText style={styles.mainCardValue}>
-            {stats.goodPoints.toLocaleString('id-ID')}
+            {pointsLoading ? '...' : userPoints.toLocaleString('id-ID')}
           </ThemedText>
           
           <View style={styles.mainCardFooter}>

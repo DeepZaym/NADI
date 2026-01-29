@@ -1,9 +1,12 @@
 import { StyleSheet, View, ScrollView, Dimensions, TouchableOpacity, Alert, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useFocusEffect } from '@react-navigation/native';
+import { SuccessModal } from '@/components/SuccessModal';
 
 const { width } = Dimensions.get('window');
+const API_BASE_URL = 'http://localhost:3000/api';
 
 interface DonationItem {
   id: string;
@@ -17,7 +20,27 @@ interface DonationItem {
 }
 
 export default function DonasiScreen() {
-  const [userPoints] = useState(1250); // Mock user points from stats
+  const [userPoints, setUserPoints] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserPoints();
+    }, [])
+  );
+
+  const fetchUserPoints = async () => {
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      const pointsStr = await AsyncStorage.getItem('user_points');
+      const points = pointsStr ? parseInt(pointsStr) : 0;
+      setUserPoints(points);
+    } catch (error) {
+      console.error('Error fetching user points:', error);
+      setUserPoints(0);
+    }
+  };
 
   const donationItems: DonationItem[] = [
     {
@@ -72,7 +95,7 @@ export default function DonasiScreen() {
     }
   ];
 
-  const handleDonation = (item: DonationItem) => {
+  const handleDonation = async (item: DonationItem) => {
     if (userPoints < item.points) {
       Alert.alert(
         "Poin Tidak Cukup 😔",
@@ -88,15 +111,54 @@ export default function DonasiScreen() {
         { text: "Batal", style: "cancel" },
         { 
           text: "Ya, Donasi!", 
-          onPress: () => {
-            Alert.alert(
-              "✨ Donasi Berhasil!",
-              `Terima kasih! ${item.points} poin telah dikonversi menjadi ${item.title}.\n\nKebaikanmu akan segera disalurkan! 🙏`
-            );
-          }
+          onPress: () => processDonation(item)
         }
       ]
     );
+  };
+
+  const processDonation = async (item: DonationItem) => {
+    setIsLoading(true);
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      
+      // Get current points
+      const pointsStr = await AsyncStorage.getItem('user_points');
+      const currentPoints = pointsStr ? parseInt(pointsStr) : 0;
+      
+      if (currentPoints < item.points) {
+        Alert.alert("Error", "Poin tidak mencukupi");
+        return;
+      }
+      
+      // Deduct points
+      const newPoints = currentPoints - item.points;
+      await AsyncStorage.setItem('user_points', newPoints.toString());
+      
+      setUserPoints(newPoints);
+      
+      // Show beautiful success modal instead of alert
+      console.log('Setting showSuccessModal to true');
+      
+      // First show a simple alert to test
+      Alert.alert(
+        "🎉 Luar Biasa!",
+        "Luar biasa! Upayamu hari ini telah berhasil dikonversi menjadi poin. Jangan lihat besar kecilnya angka, tapi lihatlah besarnya niatmu untuk sehat dan berbagi.",
+        [
+          {
+            text: "Terima Kasih 🙏",
+            onPress: () => {
+              setShowSuccessModal(true);
+            }
+          }
+        ]
+      );
+      
+    } catch (error: any) {
+      Alert.alert("Error", "Gagal memproses donasi");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -224,8 +286,31 @@ export default function DonasiScreen() {
         ))}
       </View>
 
+      {/* Test Modal Button - Remove this after testing */}
+      <View style={{ padding: 20 }}>
+        <TouchableOpacity 
+          style={{ backgroundColor: '#EF4444', padding: 15, borderRadius: 10 }}
+          onPress={() => {
+            console.log('Test button pressed');
+            setShowSuccessModal(true);
+          }}
+        >
+          <ThemedText style={{ color: 'white', textAlign: 'center' }}>Test Modal</ThemedText>
+        </TouchableOpacity>
+      </View>
+
       {/* Bottom Spacing */}
       <View style={styles.bottomSpacing} />
+      
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <SuccessModal
+          visible={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="🎉 Luar Biasa!"
+          message="Luar biasa! Upayamu hari ini telah berhasil dikonversi menjadi poin. Jangan lihat besar kecilnya angka, tapi lihatlah besarnya niatmu untuk sehat dan berbagi."
+        />
+      )}
     </ScrollView>
   );
 }
